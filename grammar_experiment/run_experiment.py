@@ -5,10 +5,17 @@ import matplotlib.pyplot as plt
 import commands
 
 
-n_trials = 30 # number of experiments run
-n_trainset = 80 # number of instances in the training set
-n_it = 3 # number of iterations
+n_trials = 50 # number of experiments run
+n_trainset = 250 # number of instances in the training set
+n_it = 25 # number of iterations
 N = 50  # number of hypotheses samples
+
+def read_file(File):
+    str = ''
+    while ']' not in str:
+        y = File.readline()
+        str += y
+    return(str)
 
 # generate target hypothesis and number of states
 for k in range(0,n_trials):
@@ -21,7 +28,7 @@ for k in range(0,n_trials):
 
 # generate input training data
 for k in range(0,n_trials):
-    command = 'echo "training_set(%s)." | yap -f experiment.pl' %n_trainset
+    command = 'echo "training_set(%s)." | yap -s99999999999 -f experiment.pl' %n_trainset
     y = commands.getoutput(command)
     F = open('./results/input-%s.pl' %k,'a')
     F.write((y.split("yes")[0]).split("9.1")[1])
@@ -31,7 +38,7 @@ for k in range(0,n_trials):
 for k in range(0,n_trials):
     for R in range(0,2):
         input_name = './results/input-%s' %k
-        command = 'echo "consult(experiment),consult(\'%s\'), go(parity0, %s, %s, %s)." | yap' %(input_name,N,n_it,R)
+        command = 'echo "consult(experiment),consult(\'%s\'), go(parity0, %s, %s, %s)." | yap -s99999999999' %(input_name,N,n_it,R)
         v = commands.getoutput(command)
         print(v)
         x = ((v.split("START")[1])).split("yes")[0].splitlines()
@@ -66,16 +73,18 @@ nHypP = np.zeros((n_trials,n_it))
 priorP = np.zeros((n_trials,n_it))
 accuracyP = np.zeros((n_trials,n_it))
 entropyP = np.zeros((n_trials,n_it))
-for k in range(0,n_trials):
-    with open('./results/output-%s.pl' %k,'r') as results:
-        nHypA[k,:] = np.fromstring(((results.readline()).split('[')[1]).split(']')[0],dtype=float, sep=' ').reshape(n_it)
-        priorA[k,:] = np.fromstring(((results.readline()).split('[')[1]).split(']')[0],dtype=float, sep=' ').reshape(n_it)
-        accuracyA[k,:] = np.fromstring(((results.readline()).split('[')[1]).split(']')[0],dtype=float, sep=' ').reshape(n_it)
-        entropyA[k,:] = np.fromstring(((results.readline()).split('[')[1]).split(']')[0],dtype=float, sep=' ').reshape(n_it)
-        nHypP[k,:] = np.fromstring(((results.readline()).split('[')[1]).split(']')[0],dtype=float, sep=' ').reshape(n_it)
-        priorP[k,:] = np.fromstring(((results.readline()).split('[')[1]).split(']')[0],dtype=float, sep=' ').reshape(n_it)
-        accuracyP[k,:] = np.fromstring(((results.readline()).split('[')[1]).split(']')[0],dtype=float, sep=' ').reshape(n_it)
-        entropyP[k,:] = np.fromstring(((results.readline()).split('[')[1]).split(']')[0],dtype=float, sep=' ').reshape(n_it)
+for l in range(0,n_trials):
+    with open('./results/output-%s.pl' %l,'r') as results:
+        k = l
+        print(k)
+        nHypA[k,:] = np.fromstring(((read_file(results).split('[')[1]).split(']')[0]),dtype=float, sep=' ').reshape(n_it)
+        priorA[k,:] = np.fromstring(((read_file(results).split('[')[1]).split(']')[0]),dtype=float, sep=' ').reshape(n_it)
+        accuracyA[k,:] = np.fromstring(((read_file(results).split('[')[1]).split(']')[0]),dtype=float, sep=' ').reshape(n_it)
+        entropyA[k,:] = np.fromstring(((read_file(results).split('[')[1]).split(']')[0]),dtype=float, sep=' ').reshape(n_it)
+        nHypP[k,:] = np.fromstring(((read_file(results).split('[')[1]).split(']')[0]),dtype=float, sep=' ').reshape(n_it)
+        priorP[k,:] = np.fromstring(((read_file(results).split('[')[1]).split(']')[0]),dtype=float, sep=' ').reshape(n_it)
+        accuracyP[k,:] = np.fromstring(((read_file(results).split('[')[1]).split(']')[0]),dtype=float, sep=' ').reshape(n_it)
+        entropyP[k,:] = np.fromstring(((read_file(results).split('[')[1]).split(']')[0]),dtype=float, sep=' ').reshape(n_it)
 
 nHyp_av = np.mean(nHypA, axis = 0)
 nHyp_std = np.std(nHypA, axis = 0)
