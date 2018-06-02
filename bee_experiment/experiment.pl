@@ -1,7 +1,5 @@
 
 :- [bee].
-:- [generate_data].
-:- ['./results/input-0'].
 
 :- use_module(library(timeout)).
 :- use_module(library(random)).
@@ -19,7 +17,6 @@ set_rand:-
 
 %% ---------- METARULES ----------
 
- %metarule(ident,[P,Q],([P,A,B]:-[[Q,A,B]])).
  metarule(chain,[P,Q,R],([P,A,B]:-[[Q,A,C],[R,C,B]])).
 
 metarule(until,[P,Q,Cond,F],([P,A,B]:-[[Q,A,B,Cond,F]]),PS):-
@@ -42,8 +39,6 @@ prim(waggle_east/1).
 prim(move_right/2).
 prim(move_left/2).
 prim(grab/2).
-%prim(grabbed_max/1).
-%prim(store/2).
 
 metagol_ai:functional.
 metagol_ai:max_clauses(3).
@@ -62,19 +57,6 @@ func_test(Atom,PS,G):-
   !,false.
 
  func_test(_,_,_).
-
-
-func_test3(Atom,Pos,Neg,PS,G):-
-    Atom = [P,A,B],
-    Atom2 = [P,A,C],
-    Atom3 = [P,C,D],
-    metagol_ai:prove_deduce(Atom,PS,G),
-    metagol_ai:prove_deduce(Atom2,PS,G),
-    metagol_ai:prove_deduce(Atom3,PS,G),
-    D\=B,
-    !, false.
-
-func_test3(_,_,_,_,_).
 
 % random split
 select_testset(0,Set,Set,[]).
@@ -181,7 +163,7 @@ maxhyp(_,Hyp/Sig,_,Hyp/Sig).
 energy(_,_,[],0).
 energy(Hyp,Sig,[Ex|Exs],E):-
         Ex = [P,A,_],
-	    metagol_ai:prove_deduce([P,A,B],Sig,Hyp),!,
+	metagol_ai:prove_deduce([P,A,B],Sig,Hyp),!,
         member(energy(E1),A),
         member(energy(E2),B),
         energy(Hyp,Sig,Exs,E3),
@@ -204,7 +186,7 @@ update_exs([P,A,B],Ep,Htrue,Sig) :-	                   % New negative example
 
 is_positive([P,A,B],H,Sig,BK) :-
 	append(H,BK,Prog),
-    metagol_ai:prove_deduce([P,A,B],Sig,Prog).
+   	metagol_ai:prove_deduce([P,A,B],Sig,Prog).
 
 
 %% ---------- EPISODE ----------
@@ -219,55 +201,47 @@ episode(exp0,
 hypothesis([sub(ifthenelse,f1,[f1,ifthenelse,waggle_east,move_right,move_left]),sub(until,f2,[f2,until,at_flower,f1]),sub(chain,f,[f,f2,grab])]).
 signature([f/2,f2/2,f1/2,at_hive/1,at_flower/1,waggle_east/1,move_right/2,move_left/2,grab/2]).
 
-%hypothesis([sub(chain,f2,[f2,grab,f1]),sub(ifthenelse,f1,[f1,ifthenelse,waggle_east,move_left,move_right]),sub(ifthenelse,f3,[f3,ifthenelse,at_flower,f2,f1]),sub(until,f,[f,until,at_hive,f3])]).
-%signature([f/2,f3/2,f2/2,f1/2,at_hive/1,at_flower/1,waggle_east/1,move_right/2,move_left/2,grab/2]).
-
-%hypothesis([sub(until,f2,[f2,until,at_hive,move_right]),sub(until,f1,[f1,until,at_flower,move_right]),sub(chain,f3,[f3,f1,grab]),sub(chain,f,[f,f3,f2])]).
-%signature([f/2,f3/2,f2/2,f1/2,at_hive/1,at_flower/1,move_right/2,move_left/2,grab/2]).
-
 %% ---------- LEARNING TASK ----------
 
-go(N,K,R) :-
+x(N,R) :-
   set_rand,
   write('START'),nl,
   hypothesis(Htrue), signature(Sig),
-  gen_pos_instance(A,B), %write(A), write(B),
-  trainset(Set), length(Set,L), %write('TrainSet'), write(Set),nl,
-  U is ceiling(L/2),
-  select_testset(U,Set,TrainSet,TestSet), %write(TestSet), nl,
+  gen_data(20,TrainSet), write(TrainSet), nl,
+  gen_data(40,TestSet), write(TestSet), nl,
+  gen_pos_instance(A,B),
   episode(exp0, Pos, Neg, BK),
-  retract(episode(exp0,Pos, Neg, BK)),
+  retract(episode(exp0,Pos,Neg,BK)),
   assert(episode(exp0,[[f,A,B]|Pos],Neg,BK)),
-  go(K,N,exp0,Htrue,Sig,TrainSet,TestSet,R).
+  go(N,exp0,Htrue,Sig,TrainSet,TestSet,R).
 
-go(0,_,_,_,_,_,_,_).
-go(K,N,Ep,Htrue,Sig,TrainSet,TestSet,R) :-
-	episode(Ep,Pos,Neg,BK),
+go(0,_,_,_,_,_,_).
+go(N,Ep,Htrue,Sig,TrainSet,TestSet,R):-
+	episode(Ep,Pos,Neg,B),
 	%write('Iteration:'),
-    write(N), nl,
+        write(N), nl,
 	%write('Pos = '), write(Pos), nl,
 	%write('Neg = '), write(Neg), nl,
-	metagol_ai:learn(Pos,Neg,G),
-    %%write(G),
-    %pprint_(G),
-    length(G,L), write(L), nl,
-    maxhyp(G,Ep,MaxH/MaxSig),
-    efficiency(MaxH,MaxSig,Ep,Eff), write(Eff),nl,
-    accuracy(TestSet,Ep,G,Htrue,Sig,BK,Acc),
+	learn(Pos,Neg,G1),
+        remove_duplicates(G1,G),
+        pprint_(G),
+        length(G,L), write(L), nl,
+        maxhyp(G,Ep,MaxH/MaxSig),
+        prior(MaxH,MaxSig,Ep,P), write(P), nl,
+        accuracy(TestSet,Ep,G,Htrue,Sig,B,Acc),
 	%writeln('Accuracy = '),
-    write(Acc), nl,
+        write(Acc), nl,
 	((R is 1)
-	-> (random_member(Ex, TrainSet),
-        bayes_predict(Ex,G,BK,Prob),
+	-> (random_member(TrainSet,Ex),
+        bayes_predict(Ex,Ep,G,B,Prob),
 	entropy(Prob,Ent));
 	(
-    maxentropy(TrainSet,Ep,G,BK,Ex,Prob,Ent))),
-    %writeln('Entropy = '),
-    write(Ent), nl,
+        maxentropy(TrainSet,Ep,G,B,Ex,Prob,Ent))),
+	%writeln('Entropy = '),
+        write(Ent), nl,
 	%write('Ex = '), write(Ex),nl,
-	%write('Probability = '), writeln(Prob), nl,
-        %write(Htrue), nl,
+	%write('Probability = '), writeln(Prob),
 	update_exs(Ex,Ep,Htrue,Sig),
 	delete(TrainSet,Ex,TrainSet2),
-	K1 is K-1,
-	go(K1,N,Ep,Htrue,Sig,TrainSet2,TestSet,R).
+	N1 is N-1,
+	go(N1,Ep,Htrue,Sig,TrainSet2,TestSet,R).
