@@ -1,5 +1,6 @@
 
 :- [bee].
+:- [generate_data].
 
 :- use_module(library(timeout)).
 :- use_module(library(random)).
