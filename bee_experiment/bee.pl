@@ -27,11 +27,6 @@ ifthenelse(A,B,Cond,Then,Else):-
 max_size(10).
 max_grabbed(6).
 
-at_flowering_plant(A):-
-  member(position(X),A),
-  member(flower_position(X),A),
-  member(flowering(X),A).
-
 at_hive(A):-
   member(position(X),A),
   member(hive_position(X),A).
@@ -40,15 +35,8 @@ at_flower(A):-
   member(position(X),A),
   member(flower_position(X),A).
 
-grabbed_max(A):-
-  member(weight(X),A),
-  member(max_grab(X),A).
-
 waggle_east(A):-
   member(waggle_dance(east),A).
-
-predator_presence(A):-
-  member(predator(1),A).
   
 
 %% ---------- PRIMITIVES ----------
@@ -82,16 +70,6 @@ grab(A,B):-
   succ(E2,E1), E2>=0,
   world_replace(weight(W1),weight(W2),A,C),
   world_replace(energy(E1),energy(E2),C,B),!.
-
-store(A,B):-
-  world_check(weight(W1),A),
-  world_check(stored(S1),A),
-  W1>0,
-  %%at_hive(A),
-  succ(S1,S2),
-  succ(W2,W1), W2>=0,
-  world_replace(stored(S1),stored(S2),A,C),
-  world_replace(weight(W1),weight(W2),C,B).
 
 
 world_check(X,A):-
