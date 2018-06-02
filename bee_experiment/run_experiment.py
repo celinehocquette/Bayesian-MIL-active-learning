@@ -9,22 +9,13 @@ import commands
 
 n_trials = 10 # number of experiments run
 n_trainset = 60 # number of instances in the training set
-n_it = 3 # number of iterations
-N = 10  # number of hypotheses samples
-
-# generate input training data
-#for k in range(0,n_trials):
-#    command = 'echo "training_set(%s)." | yap -f experiment.pl' %n_trainset
-#    y = commands.getoutput(command)
-#    F = open('./results/input-%s.pl' %k,'w')
-#    F.write((y.split("yes")[0]).split("9.1")[1])
-#    F.close()
+n_it = 6 # number of iterations
 
 # run the experiment
 for k in range(0,n_trials):
     for R in range(0,2):
         input_name = './results/input-%s' %k
-        command = 'echo "consult(experiment),consult(\'%s\'), go(%s, %s, %s)." | yap' %(input_name,N,n_it,R)
+        command = 'echo "consult(experiment), x(%s, %s)." | yap' %(n_it,R)
         v = commands.getoutput(command)
         print(v)
         x = ((v.split("START")[1])).split("yes")[0].splitlines()
