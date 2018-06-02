@@ -30,47 +30,18 @@ learn(_Name,Pos,Neg,G):- % deprecated
   write('WARNING: metagol learn(Name,...) is deprecated. Use learn/3 instead.'),nl,
   learn(Pos,Neg,G).
 
-/*
 
-learn(Pos1,Neg1,G):-
-  atom_to_list(Pos1,Pos2),
-  atom_to_list(Neg1,Neg2),
-  initial_sig(Pos2,Neg2,Sig1),!,
-  proveall(Pos2,Sig1,Sig2,G),
-  nproveall(Neg2,Sig2,G),
-  (functional -> is_functional(Pos2,G); true).
-
-*/
-
-learn(Pos2,Neg2,G3):-
-  %atom_to_list(Pos1,Pos2),
-  %atom_to_list(Neg1,Neg2), nl, nl,
+learn(Pos2,Neg2,G1):-
   initial_sig(Pos2,Neg2,Sig1),!,
   proveall(Pos2,Neg2,Sig1,G),
   delMember([],G,G1),
-  remove_duplicates(G1,G2),
-  (functional -> is_functional_(Pos2,G2,G3)
-  ; true).
+  (functional -> is_functional_(Pos2,Sig2,G1); true).
 
 
-is_functional_(_,[],[]).
-is_functional_(Pos,[G/Sig|R],[G/Sig|R2]) :-
-	is_functional(Pos,Sig,G),!,
-	is_functional_(Pos,R,R2).
-is_functional_(Pos,[G/Sig|R],R2) :-
-	is_functional_(Pos,R,R2).
-
-is_functional_via_(_,[],[]).
-is_functional_via_(Pos,[G/Sig|R],[G/Sig|R2]) :-
-	is_functional_via(Pos,Sig,G),!,
-	is_functional_via_(Pos,R,R2).
-is_functional_via_(Pos,[G/Sig|R],R2) :-
-	is_functional_via_(Pos,R,R2).
-
-is_functional_via([],_,_).
-is_functional_via([Atom|Atoms],Sig,G) :-
-   user:func_test2(Atom,Sig,G),
-   is_functional_via(Atoms,Sig,G).
+is_functional_(_,_,[]).
+is_functional_(Pos,Sig,[G|R]) :-
+	is_functional(Pos,Sig,G),
+	is_functional_(Pos,Sig,R).
 
 delMember(_, [], []).
 delMember(X, [X|Xs], Y) :-
@@ -94,25 +65,13 @@ proveall(Atoms,Neg,Sig,Gs):-
   get_option(min_clauses(MinN)),
   get_option(max_clauses(MaxN)),!,
   target_predicate(Atoms,Name/Arity),!,
-  %findall(G,
-  %       (between(MinN,MaxN,N),
-  %        between(0,N,M),
-  %        augmented_sig(Name/Arity,M,Sig,Sig2),
-  %        prove(Atoms,Sig2,N,[],G),
-  %        nproveall(Neg,Sig2,G),nl),
-  %        Gs).
   proveall(Atoms,Neg,Sig,MinN,MaxN,Gs).
 
-max(A,B,A) :-
-	A>=B, !.
-max(_,B,B).
 
 proveall(_,_,_,N,MaxN,[]) :- succ(MaxN,N), !.
 proveall(Atoms,Neg,Sig,N,MaxN,Gs):-
   succ(MaxM,N),
-  N2 is N-1,
-  max(N2,0,MinM),
-  proveall(Atoms,Neg,Sig,N,MaxN,MinM,MaxM,Gs1), !,
+  proveall(Atoms,Neg,Sig,N,MaxN,0,MaxM,Gs1),
   succ(N,N1),
   proveall(Atoms,Neg,Sig,N1,MaxN,Gs2),
   append(Gs1,Gs2,Gs).
@@ -130,16 +89,6 @@ proveall(Atoms,Neg,Sig,N,MaxN,M,MaxM,[Gs|Gs2]) :-
   succ(M,M1),
   proveall(Atoms,Neg,Sig,N,MaxN,M1,MaxM,Gs2).
 
-
-/*
-proveall(Atoms,Sig1,Sig2,G):-
-  target_predicate(Atoms,Name/Arity),!,
-  iterator(N,M),%% trace,
-  format('% clauses: ~d invented predicates: ~d\n',[N,M]),
-  augmented_sig(Name/Arity,M,Sig1,Sig2),
-  prove(Atoms,Sig2,N,[],G).
-*/
-
 prove([],_Sig,_MaxN,G,G).
 
 prove([Atom|Atoms],Sig,MaxN,G1,G2):-
@@ -150,7 +99,7 @@ prove_aux('@'(Atom),_,_,G,G):- !,
   user:call(Atom).
 
 prove_aux([P|Args],_,_,G,G):-
-  user:primtest(P,Args),
+  user:primtest(P,Args),!,
   user:primcall(P,Args).
 
 prove_aux(Atom,Sig,MaxN,G1,G2):-
@@ -171,34 +120,20 @@ prove_aux(Atom,Sig,MaxN,G1,G2):-
   member(sub(Name,P,MetaSub),G1),
   user:metarule_init(Name,MetaSub,(Atom:-Body)),
   prove(Body,Sig,MaxN,G1,G2).
-
-
-%% prove_aux(Atom,Sig,MaxN,G1,G2):-
-%%   Atom = [P|_],
-%%   member(P,[until,ifthenelse,map,fold,foldback,filter,reduce,reduceback]),!,
-%%   user:background((Atom:-Body)),
-%%   prove(Body,Sig,MaxN,G1,G2).
-
+  
 %% new abduction
 prove_aux(Atom,Sig1,MaxN,G1,G2):-
-    length(G1,L),
-    L < MaxN,
-    lower_sig(Atom,P,Sig1,Sig2),
-    user:metarule(Name,MetaSub,(Atom :- Body),Sig2),
-    new_metasub(G1,sub(Name,P,MetaSub)),
-    %% deterministic(sub(Name,P,MetaSub),G1),
-    prove(Body,Sig1,MaxN,[sub(Name,P,MetaSub)|G1],G2).
+  length(G1,L),
+  L < MaxN,
+  lower_sig(Atom,P,Sig1,Sig2),
+  user:metarule(Name,MetaSub,(Atom :- Body),Sig2),
+  new_metasub(G1,sub(Name,P,MetaSub)),
+  deterministic(sub(Name,P,MetaSub),G1),
+  prove(Body,Sig1,MaxN,[sub(Name,P,MetaSub)|G1],G2).
 
 %% deterministic(X,_):- X = sub(pab_qac_pcb,_),!.
 deterministic(sub(_,P,_),G):-
   \+ member(sub(_,P,_),G).
-
-  %% X = sub(_,[H|_]),
-  %% member(sub(Rule,[H|_]),G),
-  %% Rule \= pab_qac_pcb,
-  %% !, false.
-%% deterministic(_,_).
-
 
 new_metasub([],_).
 new_metasub([H|_],A):-
@@ -209,48 +144,7 @@ new_metasub([_|T],A):-
 prove_deduce(Atom,Sig,G):-
   length(G,N),
   prove_aux(Atom,Sig,N,G,G).
-
-
-prove_via_([],State,Sig,MaxN,G,G).
-
-prove_via_([Atom|Atoms],State,Sig,MaxN,G1,G2):-
-  prove_aux_via(Atom,State,Sig,MaxN,G1,G3),
-  prove_via_(Atoms,State,Sig,MaxN,G3,G2).
-
-prove_deduce_via(Atom,State,Sig,G):-
-  length(G,N),
-  prove_aux_via(Atom,State,Sig,N,G,G),!,
-  intermediate(State),!,
-  retract(intermediate(State)),!.
-
-prove_aux_via(Atom,State,Sig,MaxN,G1,G2):-
-  Atom=[P|_Args],
-  member(sub(Name,P,MetaSub),G1),
-  user:metarule_init(Name,MetaSub,(Atom:-Body)), 
-  prove_via_(Body,State,Sig,MaxN,G1,G2).
-
-prove_aux_via('@'(Atom),_,_,_,G,G):- !,
-  user:call(Atom).
-
-prove_aux_via([P|Args],State,_,_,G,G):-
-  user:primtest(P,Args),!,
-  user:primcall(P,Args),
-  (member(State,Args) ->
-  (assert(intermediate(State))); true).
-
-prove_aux_via(Atom,State,Sig,MaxN,G1,G2):-
-  Atom = [P|Args],
-  length(Args,A),
-  user:interpreted(P/A),!,
-  user:background((Atom:-Body)),
-  prove_via_(Body,State,Sig,MaxN,G1,G2).
-
-prove_aux_via([not,P|Args],_,_,_,G,G):-!,
-  user:primtest(P,Args),
-  \+ user:primcall(P,Args).
-
-
-
+  
 nproveall([],_Sig,_G).
 nproveall([Atom|T],Sig,G):-
   \+ prove_deduce(Atom,Sig,G),
@@ -325,7 +219,7 @@ atom_to_list([Atom|T],[AtomAsList|Out]):-
 
 is_functional([],_,_).
 is_functional([Atom|Atoms],Sig,G) :-
-   user:func_test(Atom,Sig,G),
+  user:func_test(Atom,Sig,G),
   is_functional(Atoms,Sig,G).
 
 :- user:multifile(prim/1).
