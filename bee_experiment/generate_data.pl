@@ -38,15 +38,11 @@ max(_,B,B).
 post_cond(A,B) :-
   world_check(weight(S1),A),
   world_check(weight(S2),B),
-  S2>S1,     %                       %% pollen brought back
+  S2>S1,     %                       %% pollen found
   world_check(energy(E),A),
   world_check(hive_position(H),A),
-  %world_check(position(H),B),
   world_check(flower_position(F),A),
   E>=abs(H-F).                               %% energy left
-  %world_check(position(P),B),
-  %world_check(hive_position(P),B).   %% bee at hive on final state
-  %world_check(predator(0),A).        %% no predator at the beginning of the task
 
 get_waggle_direction(H,F,east) :-
   F-H >0, !.
@@ -97,30 +93,7 @@ gen_data(M,S):-
   train_neg_exs(M3,SN),
   append(SP,SN,S).
 
-intermediate_pos(A,B,C):-
-  world_check(position(PA),A),
-  world_check(position(PB),B),
-  min(PA,PB,P1), max(PA,PB,P2), P3 is P2+1,
-  random(P1,P3,PC),
-  world_replace(position(PA),position(PC),A,D),
-  world_check(weight(WA),A),
-  world_check(weight(WB),B),
-  min(WA,WB,W1), max(WA,WB,W2), W3 is W2+1,
-  random(0,W3,WC),
-  world_replace(weight(WA),weight(WC),D,E),
-  world_check(energy(EA),A),
-  EC is EA-abs(PC-PA),
-  world_replace(energy(EA),energy(EC),E,C).
-
 random_member(E, List) :-
         length(List, L),
         random(0, L, Index),
         nth0(Index, List, E), !.
-
-intermediate_pos_set(0,_,[]).
-intermediate_pos_set(N,TrainSet,Set):-
-  random_member([f,A,B], TrainSet),
-  intermediate_pos(A,B,C),
-  N1 is N-1,
-  intermediate_pos_set(N1,TrainSet,Set2),
-  append([[C/[f,A,B]]],Set2, Set).
