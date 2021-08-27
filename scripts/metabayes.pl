@@ -48,11 +48,11 @@ learn_metabayes2(K,N,Pos,Neg,[H|Prog]):-
     integer(K),
     dec2bin(K,U),
     bin2frac(U,Prob),
-   % format('\nProb ~w ~w ~w\n',[K,N,Prob]),
+  %  format('\nProb ~w ~w ~w\n',[K,N,Prob]),
     (((proveall_metabayes(Prob,Pos,Sig,H1),
       nproveall(Neg,Sig,H1)) -> (H=H1));
     (H=[])),
-     K1 is K+1,
+  K1 is K+1,
      learn_metabayes2(K1,N,Pos,Neg,Prog).
 
 %% generates probabilities for regular sampling, these probabilities are evenly distributed in [0,1] and do not repeat
@@ -178,11 +178,17 @@ binds_(FullSig,Sig2,P,A,metarule(Name,[P1/A1|Tail2],Types,(Atom:-Body),Sig,Recur
     (((length(Types,L),L>0)-> Types=[inv|Types1]);
     Types1=[]),
     select_lower(P1,A1,FullSig,_Sig1,_Sig2),
+    metarule(_,_,_,(Atom1:-_),_,_,_),
+    Atom1=[_|Args],
+    length(Args,A1),
     binds_(FullSig,Sig2,P,A,metarule(Name,Tail2,Types1,(Atom:-Body),Sig,Recursive,Path)).
 binds_(FullSig,Sig2,P,A,metarule(Name,[P1/A1|Tail2],Types,(Atom:-Body),Sig,Recursive,Path)):-
     (((length(Types,L),L>0)-> Types=[inv|Types1]);
     Types1=[]),
     bind_lower(P1,A1,FullSig,Sig2,_Sig1),
+    metarule(_,_,_,(Atom1:-_),_,_,_),
+    Atom1=[_|Args],
+    length(Args,A1),
     A1<3,
     binds_(FullSig,Sig2,P,A,metarule(Name,Tail2,Types1,(Atom:-Body),Sig,Recursive,Path)).
 

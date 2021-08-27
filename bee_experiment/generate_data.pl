@@ -36,17 +36,12 @@ train_neg_exs(M,Set2):-
     add_neg_instance(Set1,Set2).
 
 add_pos_instance(Set1,[Ex|Set1]):-
-	repeat,
     gen_pos_instance(A,B),
-    Ex=..[f,A,B],
-    \+(already_in(Ex,Set1)),!.
+    Ex=..[f,A,B].
 
 add_neg_instance(Set1,[Ex|Set1]):-
-	repeat,
     gen_neg_instance(A,B),
-    Ex=..[f,A,B],
-    \+(already_in(Ex,Set1)),!.
-
+    Ex=..[f,A,B].
 
 gen_pos_instance(A,B):-
   repeat,
@@ -85,15 +80,3 @@ post_cond(A,B) :-
   world_check(hive_position(H),A),
   world_check(flower_position(F),A),
   E>=abs(H-F)+1.
-
-
-already_in(f(A1,_),[f(A2,_)|_]):-
-    world_check(flower_position(P),A1),
-    world_check(flower_position(P),A2).
-
-already_in(f(A1,_),[f(A2,_)|Tail]):-
-    world_check(flower_position(P1),A1),
-    world_check(flower_position(P2),A2),
-    \+(P1=P2),
-    already_in(f(A1,_),Tail).
-    

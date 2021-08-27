@@ -11,10 +11,9 @@
 
 %% ---------- METARULES ----------
 
+metarule(until, [P/2,Q/4,Cond/1,F/2], [P,A,B], [[Q,A,B,Cond,F]]).
 metarule(chain, [P/2,Q/2,R/2], [P,A,B], [[Q,A,C],[R,C,B]]).
 metarule(ifthenelse, [P/2,Q/5,Cond/1,Then/2,Else/2], [P,A,B], [[Q,A,B,Cond,Then,Else]]).
-metarule(until, [P/2,Q/4,Cond/1,F/2], [P,A,B], [[Q,A,B,Cond,F]]).
-
 
 
 %% ---------- METAGOL SETTINGS ----------
@@ -30,12 +29,12 @@ interpreted(ifthenelse/5).
 
 max_clauses(3).
 
+%% constraint to eliminate some non-deterministic hypotheses
 constraint.
 constraint(sub(_,P,A,_,_),Prog):-
     member(sub(_,P,A,_,_),Prog).
 
 prior(Hyp,Ep,P) :-
-    writeln(prior(Hyp,Ep,P)),
     length(Hyp,L),
     efficiency(Hyp,Ep,E),
     P is 1/(L+E)**2.
@@ -63,6 +62,7 @@ episode(exp0,
 	[],         % positive examples
 	[]).         % negative examples
 
+%% target hypothesis
 hypothesis([sub(ifthenelse,f_1,2,[f_1/2,ifthenelse/5,waggle_east/1,move_right/2,move_left/2],[inv]),sub(until,f_2,2,[f_2/2,until/4,at_flower/1,f_1/2],[inv]),sub(chain,f,2,[f/2,f_2/2,grab/2],[inv,prim])]).
 
 %% ---------- LEARNING TASK ----------
