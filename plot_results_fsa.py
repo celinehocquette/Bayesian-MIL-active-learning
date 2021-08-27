@@ -17,17 +17,13 @@ n_trials=50
 def get_results(name):
 
     accuracy=[]
-    time=[]
     nhyp=[]
-    length=[]
     complexity=[]
     entropy=[]
 
     for k in range(0,n_trials):
         accuracy.append([])
-        time.append([])
         nhyp.append([])
-        length.append([])
         complexity.append([])
         entropy.append([])
         with open('./fsa_experiment/results_{0}/output-{1}.pl'.format(name,k),'r') as f:
@@ -36,12 +32,6 @@ def get_results(name):
                 if ys[0] == 'Accuracy':
                     ys[1] = float(ys[1].strip())
                     accuracy[-1].append(ys[1])
-                if ys[0] == 'time':
-                    ys[1] = float(ys[1].strip())
-                    time[-1].append(ys[1])
-                if ys[0] == 'length':
-                    ys[1] = float(ys[1].strip())
-                    length[-1].append(ys[1])
                 if ys[0] == 'complexity':
                     ys[1] = float(ys[1].strip())
                     complexity[-1].append(ys[1])
@@ -53,17 +43,15 @@ def get_results(name):
                     entropy[-1].append(ys[1])
 
     (acc_av, acc_sem) = mean_sem(accuracy)
-    (time_av, time_sem) = mean_sem(time)
-    (length_av, length_sem) = mean_sem(length)
     (complexity_av, complexity_sem) = mean_sem(complexity)
     (nhyp_av, nhyp_sem) = mean_sem(nhyp)
     (entropy_av, entropy_sem) = mean_sem(entropy)
     
-    return acc_av, acc_sem, time_av, time_sem, length_av, length_sem, complexity_av, complexity_sem, nhyp_av, nhyp_sem, entropy_av, entropy_sem
+    return acc_av, acc_sem, complexity_av, complexity_sem, nhyp_av, nhyp_sem, entropy_av, entropy_sem
     
-acc_active_av, acc_active_sem, time_active_av, time_active_sem, length_active_av, length_active_sem, complexity_active_av, complexity_active_sem, nhyp_active_av, nhyp_active_sem, entropy_active_av, entropy_active_sem = get_results("active")
+acc_active_av, acc_active_sem, complexity_active_av, complexity_active_sem, nhyp_active_av, nhyp_active_sem, entropy_active_av, entropy_active_sem = get_results("active")
 
-acc_passive_av, acc_passive_sem, time_passive_av, time_passive_sem, length_passive_av, length_passive_sem, complexity_passive_av, complexity_passive_sem, nhyp_passive_av, nhyp_passive_sem, entropy_passive_av, entropy_passive_sem = get_results("passive")
+acc_passive_av, acc_passive_sem, complexity_passive_av, complexity_passive_sem, nhyp_passive_av, nhyp_passive_sem, entropy_passive_av, entropy_passive_sem = get_results("passive")
 
 xs=range(1,n_it+1)
 plt.figure()

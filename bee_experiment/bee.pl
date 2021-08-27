@@ -1,31 +1,17 @@
-:- use_module('./metagol_ai').
-
-:- user:call(op(950,fx,'@')).
-
 
 %% ---------- INTERPRETATED BACKGROUND KNOWLEDGE ----------
 
-user:interpreted(until/4).
-user:interpreted(ifthenelse/5).
+until(A,C,Cond,Func):- call(Func,A,C),call(Cond,C).
+until(A,B,Cond,Func) :- call(Func,A,C),call(not,Cond,C),until(C,B,Cond,Func).
 
-background(([until,A,B,Cond,F]:- [[F,A,B],[Cond,B]])).
-background(([until,A,B,Cond,F]:- [[F,A,C],[until,C,B,Cond,F]])).
-
-background(([ifthenelse,A,B,Cond,Then,_]:- [[Cond,A],[Then,A,B]])).
-background(([ifthenelse,A,B,Cond,_,Else]:- [[not,Cond,A],[Else,A,B]])).
-
-until(A,B,Cond,Func):-
-  call(Func,A,C),
-  (call(Cond,C) -> B=C; until(C,B,Cond,Func)).
-
-ifthenelse(A,B,Cond,Then,Else):-
-  (call(Cond,A) -> call(Then,A,B); call(Else,A,B)).
+ifthenelse(A,B,Cond,Then,_):- call(Cond,A), call(Then,A,B).
+ifthenelse(A,B,Cond,_,Else):- call(not,Cond,A), call(Else,A,B).
 
 
-%% ---------- COMPILED BACKGROUND KNOWLEDGE ----------
+%% ---------- FIRST-ORDER BACKGROUND KNOWLEDGE ----------
 
 max_size(10).
-max_grabbed(6).
+max_grabbed(3).
 
 at_hive(A):-
   member(position(X),A),
@@ -37,9 +23,6 @@ at_flower(A):-
 
 waggle_east(A):-
   member(waggle_dance(east),A).
-  
-
-%% ---------- PRIMITIVES ----------
 
 move_right(A,B):-
   world_check(position(X1),A),
@@ -70,7 +53,6 @@ grab(A,B):-
   succ(E2,E1), E2>=0,
   world_replace(weight(W1),weight(W2),A,C),
   world_replace(energy(E1),energy(E2),C,B),!.
-
 
 world_check(X,A):-
   nonvar(A),
